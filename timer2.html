@@ -45,12 +45,16 @@ button.ghost{
   background:rgba(255,255,255,0.02)
 }
 
-/* ★ 完全に揺れない等幅フォント設定 ★ */
+/* ★ iOS でも綺麗に見える等幅フォント設定 ★ */
 .time{
   font-size:48px;
   font-weight:700;
   letter-spacing:0.02em;
-  font-family: Consolas, "Courier New", monospace;
+  font-family:
+    Consolas,          /* Windows */
+    Menlo,             /* iOS / macOS → 最も綺麗 */
+    "Courier New",     /* fallback */
+    monospace;         /* 最終手段 */
   font-variant-numeric: tabular-nums;
 }
 
@@ -182,7 +186,7 @@ button.ghost{
       .wrap{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
       .time{
         font-size:48px;font-weight:700;
-        font-family:Consolas,"Courier New",monospace;
+        font-family:Consolas,Menlo,"Courier New",monospace;
         font-variant-numeric:tabular-nums;
       }
       .elapsed{color:#ff6b6b}
