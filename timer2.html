@@ -17,7 +17,12 @@ input[type="time"]{padding:10px;border-radius:8px;border:1px solid rgba(255,255,
 button{padding:10px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#5ad0ff);color:#041025;font-weight:600;cursor:pointer}
 button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
 .display{margin-top:18px;text-align:center;padding:14px;border-radius:10px;background:rgba(255,255,255,0.02)}
-.time{font-size:48px;font-weight:700}
+.time{
+  font-size:48px;
+  font-weight:700;
+  letter-spacing:0.02em;
+  font-variant-numeric: tabular-nums; /* ← 数字の揺れ防止 */
+}
 .label{color:var(--muted);margin-top:6px;font-size:13px}
 .elapsed{color:#ff6b6b}
 @media(max-width:520px){
@@ -31,9 +36,7 @@ button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);colo
 <body>
 <div class="container">
   <main class="card">
-    <div class="header">
-      <h1 class="title">Timer2</h1>
-    </div>
+    <div class="header"><h1 class="title">Timer2</h1></div>
 
     <!-- プリセットボタン -->
     <div class="presets">
@@ -60,89 +63,84 @@ button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);colo
 
 <script>
 (() => {
-  const timeInput = document.getElementById('timeInput');
-  const startBtn = document.getElementById('startBtn');
-  const popupBtn = document.getElementById('popupBtn');
-  const resetBtn = document.getElementById('resetBtn');
-  const timeText = document.getElementById('timeText');
-  const status = document.getElementById('status');
-  const presetBtns = document.querySelectorAll('.presetBtn');
+  const timeInput=document.getElementById('timeInput');
+  const startBtn=document.getElementById('startBtn');
+  const popupBtn=document.getElementById('popupBtn');
+  const resetBtn=document.getElementById('resetBtn');
+  const timeText=document.getElementById('timeText');
+  const status=document.getElementById('status');
+  const presetBtns=document.querySelectorAll('.presetBtn');
 
-  let timer = null;
-  let target = null;
-  let isNextDay = false;
-  let popup = null;
+  let timer=null,target=null,isNextDay=false,popup=null;
 
-  const pad = n => String(n).padStart(2,'0');
-  const formatSpan = ms => {
-    const s = Math.floor(Math.abs(ms)/1000);
+  const pad=n=>String(n).padStart(2,'0');
+  const formatSpan=ms=>{
+    const s=Math.floor(Math.abs(ms)/1000);
     return `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`;
   };
-  const formatTarget = (d, next) =>
-    d ? `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${next?'（翌日）':''}` : '--';
+  const formatTarget=(d,next)=>d?`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${next?'（翌日）':''}`:'--';
 
   function parseToTarget(val){
-    const [h,m,s] = val.split(':').map(v=>parseInt(v,10));
+    const [h,m,s]=val.split(':').map(v=>parseInt(v,10));
     if(isNaN(h)||isNaN(m)) return null;
-    const now = new Date();
-    const t = new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,s||0);
-    if(t <= now){ t.setDate(t.getDate()+1); return {d:t,next:true}; }
+    const now=new Date();
+    const t=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,s||0);
+    if(t<=now){t.setDate(t.getDate()+1);return {d:t,next:true};}
     return {d:t,next:false};
   }
 
   function syncPopup(){
-    if(!popup || popup.closed) return;
+    if(!popup||popup.closed) return;
     try{
-      popup.document.getElementById('timeText').textContent = timeText.textContent;
-      popup.document.getElementById('timeText').className = timeText.className;
-      popup.document.getElementById('status').textContent = status.textContent;
-      popup.document.getElementById('endTime').textContent = formatTarget(target,isNextDay);
+      popup.document.getElementById('timeText').textContent=timeText.textContent;
+      popup.document.getElementById('timeText').className=timeText.className;
+      popup.document.getElementById('status').textContent=status.textContent;
+      popup.document.getElementById('endTime').textContent=formatTarget(target,isNextDay);
     }catch(e){}
   }
 
   function update(){
     if(!target) return;
-    const diff = target - new Date();
-    if(diff >= 0){
-      timeText.textContent = formatSpan(diff);
+    const diff=target-new Date();
+    if(diff>=0){
+      timeText.textContent=formatSpan(diff);
       timeText.classList.remove('elapsed');
-      status.textContent = '残り時間';
-    } else {
-      timeText.textContent = formatSpan(diff);
+      status.textContent='残り時間';
+    }else{
+      timeText.textContent=formatSpan(diff);
       timeText.classList.add('elapsed');
-      status.textContent = '経過時間';
+      status.textContent='経過時間';
     }
     syncPopup();
   }
 
   function start(){
-    const val = timeInput.value;
-    const parsed = parseToTarget(val);
-    if(!parsed){ alert('有効な時刻を選んでください'); return; }
-    target = parsed.d; isNextDay = parsed.next;
+    const parsed=parseToTarget(timeInput.value);
+    if(!parsed){alert('有効な時刻を選んでください');return;}
+    target=parsed.d;isNextDay=parsed.next;
     if(timer) clearInterval(timer);
     update();
-    timer = setInterval(update,500);
-    startBtn.disabled = true;
+    timer=setInterval(update,500);
+    startBtn.disabled=true;
     syncPopup();
   }
 
   function reset(){
     if(timer) clearInterval(timer);
-    timer=null; target=null; isNextDay=false;
+    timer=null;target=null;isNextDay=false;
     timeText.textContent='--:--:--';
     timeText.classList.remove('elapsed');
     status.textContent='終了時刻を指定してください';
     startBtn.disabled=false;
-    if(popup && !popup.closed) popup.close();
+    if(popup&&!popup.closed) popup.close();
   }
 
   function openPopup(){
-    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints>0;
-    if(isTouch && window.innerWidth<=520) return;
+    const isTouch='ontouchstart' in window||navigator.maxTouchPoints>0;
+    if(isTouch&&window.innerWidth<=520) return;
 
     const w=360,h=180;
-    popup = window.open('', 'cd_popup2',
+    popup=window.open('', 'cd_popup2',
       `toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=${w},height=${h}`);
 
     popup.document.write(`
@@ -150,7 +148,7 @@ button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);colo
       <style>
       html,body{margin:0;padding:6px;background:#071029;color:#fff;font-family:system-ui;overflow:hidden}
       .wrap{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
-      .time{font-size:48px;font-weight:700}
+      .time{font-size:48px;font-weight:700;font-variant-numeric:tabular-nums}
       .elapsed{color:#ff6b6b}
       .label{font-size:13px;color:#9aa4b2;margin-top:6px}
       .end{font-size:11px;color:#9aa4b2;margin-top:6px}
@@ -162,30 +160,25 @@ button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);colo
       </div></body></html>
     `);
     popup.document.close();
-    try{ popup.resizeTo(w,h); }catch(e){}
+    try{popup.resizeTo(w,h);}catch(e){}
     syncPopup();
   }
 
-  startBtn.addEventListener('click', start);
-  resetBtn.addEventListener('click', reset);
-  popupBtn.addEventListener('click', openPopup);
-  timeInput.addEventListener('keydown', e=>{ if(e.key==='Enter') start(); });
+  startBtn.addEventListener('click',start);
+  resetBtn.addEventListener('click',reset);
+  popupBtn.addEventListener('click',openPopup);
+  timeInput.addEventListener('keydown',e=>{if(e.key==='Enter')start();});
 
-  // プリセットボタン
+  // プリセット
   presetBtns.forEach(btn=>{
     btn.addEventListener('click',()=>{
-      const t = btn.dataset.time;
-      timeInput.value = t + ':00';
+      timeInput.value=btn.dataset.time + ':00';
     });
   });
 
   // 初期値：1分後
-  (() => {
-    const d = new Date(Date.now()+60000);
-    timeInput.value = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-  })();
+  (()=>{const d=new Date(Date.now()+60000);timeInput.value=`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;})();
 })();
 </script>
 </body>
 </html>
-
