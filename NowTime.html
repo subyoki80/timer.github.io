@@ -39,13 +39,15 @@ html,body{
   box-shadow:0 6px 24px rgba(2,6,23,0.6);
 }
 
-.title{
+/* 日付（タイトル部分） */
+.date{
   font-size:20px;
-  margin:0 0 16px 0;
+  margin-bottom:16px;
   color:#e6eef8;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ★ ゴシック系で綺麗、数字は揺れゼロ ★ */
+/* 現在時刻（揺れゼロ） */
 .time{
   font-size:64px;
   font-weight:700;
@@ -64,13 +66,14 @@ html,body{
 @media(max-width:520px){
   .time{font-size:48px}
   .card{padding:18px}
+  .date{font-size:18px}
 }
 </style>
 </head>
 <body>
 <div class="container">
   <div class="card">
-    <h1 class="title">NowTime</h1>
+    <div id="date" class="date">----/--/-- ---</div>
     <div id="now" class="time">--:--:--</div>
   </div>
 </div>
@@ -78,15 +81,26 @@ html,body{
 <script>
 (() => {
   const nowEl = document.getElementById('now');
+  const dateEl = document.getElementById('date');
 
   const pad = n => String(n).padStart(2,'0');
+  const week = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
   function update(){
     const d = new Date();
+
+    // 時刻
     const h = pad(d.getHours());
     const m = pad(d.getMinutes());
     const s = pad(d.getSeconds());
     nowEl.textContent = `${h}:${m}:${s}`;
+
+    // 日付（YYYY/MM/DD Tue）
+    const y = d.getFullYear();
+    const mo = pad(d.getMonth()+1);
+    const da = pad(d.getDate());
+    const wd = week[d.getDay()];
+    dateEl.textContent = `${y}/${mo}/${da} ${wd}`;
   }
 
   update();
@@ -95,4 +109,3 @@ html,body{
 </script>
 </body>
 </html>
-
