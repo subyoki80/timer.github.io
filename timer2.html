@@ -8,7 +8,7 @@
 :root{--bg:#0f1724;--card:#0b1220;--accent:#7c5cff;--muted:#9aa4b2}
 html,body{
   height:100%;margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN",sans-serif;
+  font-family:system-ui,-apple-system,"SF Pro Text","Helvetica Neue","Segoe UI",Roboto,sans-serif;
   background:linear-gradient(180deg,#071029,#0f1724);
   color:#e6eef8;
 }
@@ -45,17 +45,18 @@ button.ghost{
   background:rgba(255,255,255,0.02)
 }
 
-/* ★ iOS でも綺麗に見える等幅フォント設定 ★ */
+/* ★ iOS でもゴシックで綺麗、数字は揺れない ★ */
 .time{
   font-size:48px;
   font-weight:700;
   letter-spacing:0.02em;
   font-family:
-    Consolas,          /* Windows */
-    Menlo,             /* iOS / macOS → 最も綺麗 */
-    "Courier New",     /* fallback */
-    monospace;         /* 最終手段 */
-  font-variant-numeric: tabular-nums;
+    "SF Pro Text",       /* iOS / macOS → ゴシックで綺麗 */
+    "Helvetica Neue",    /* fallback */
+    "Segoe UI",          /* Windows → ゴシック */
+    Roboto,              /* Android → ゴシック */
+    sans-serif;
+  font-variant-numeric: tabular-nums; /* 数字を完全等幅にする */
 }
 
 .label{color:var(--muted);margin-top:6px;font-size:13px}
@@ -186,7 +187,7 @@ button.ghost{
       .wrap{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
       .time{
         font-size:48px;font-weight:700;
-        font-family:Consolas,Menlo,"Courier New",monospace;
+        font-family:"SF Pro Text","Helvetica Neue","Segoe UI",Roboto,sans-serif;
         font-variant-numeric:tabular-nums;
       }
       .elapsed{color:#ff6b6b}
