@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>シンプルカウントダウン</title>
+<meta name="description" content="終了時刻を指定するだけのシンプルなカウントダウンタイマー。別ウィンドウ表示対応。">
+<style>
+:root{--bg:#0f1724;--card:#0b1220;--accent:#7c5cff;--muted:#9aa4b2}
+html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN",sans-serif;background:linear-gradient(180deg,#071029,#0f1724);color:#e6eef8}
+.container{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{width:100%;max-width:720px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:18px;box-shadow:0 6px 24px rgba(2,6,23,0.6)}
+.header{display:flex;align-items:center;justify-content:space-between}
+.title{font-size:18px;margin:0}
+.controls{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+input[type="time"]{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:var(--accent);min-width:150px}
+button{padding:10px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#5ad0ff);color:#041025;font-weight:600;cursor:pointer}
+button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+.display{margin-top:18px;text-align:center;padding:14px;border-radius:10px;background:rgba(255,255,255,0.02)}
+.time{font-size:48px;font-weight:700;letter-spacing:0.02em}
+.label{color:var(--muted);margin-top:6px;font-size:13px}
+.elapsed{color:#ff6b6b}
+@media(max-width:520px){.time{font-size:36px}input[type="time"]{min-width:120px}.card{padding:14px}}
+</style>
+</head>
+<body>
+<div class="container">
+  <main class="card" role="application" aria-label="カウントダウンタイマー">
+    <div class="header">
+      <h1 class="title">カウントダウン</h1>
+    </div>
+
+    <div class="controls" aria-hidden="false">
+      <input id="timeInput" type="time" step="1" aria-label="終了時刻">
+      <button id="startBtn">開始</button>
+      <button id="popupBtn" class="ghost">別ウィンドウで開く</button>
+      <button id="resetBtn" class="ghost">リセット</button>
+    </div>
+
+    <div class="display" aria-live="polite">
+      <div id="timeText" class="time">--:--:--</div>
+      <div id="status" class="label">終了時刻を指定して「開始」を押してください</div>
+    </div>
+  </main>
+</div>
+
+<script>
+(() => {
+  const timeInput = document.getElementById('timeInput');
+  const startBtn = document.getElementById('startBtn');
+  const popupBtn = document.getElementById('popupBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const timeText = document.getElementById('timeText');
+  const status = document.getElementById('status');
+  let timer = null;
+  let target = null;
+  let isNextDay = false;
+  let popup = null;
+
+  const pad = n => String(n).padStart(2,'0');
+  const formatSpan = ms => {
+    const s = Math.floor(Math.abs(ms)/1000);
+    const hh = Math.floor(s/3600);
+    const mm = Math.floor((s%3600)/60);
+    const ss = s%60;
+    return `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
+  };
+  const formatTarget = (d, next) => d ? `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${next ? ' （翌日）' : ''}` : '--';
+
+  function parseToTarget(val){
+    const parts = val.split(':').map(x=>parseInt(x,10));
+    if(parts.length<2 || parts.some(isNaN)) return null;
+    const now = new Date();
+    const t = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parts[0], parts[1], parts[2]||0, 0);
+    if(t.getTime() <= now.getTime()){ t.setDate(t.getDate()+1); return {d:t,next:true}; }
+    return {d:t,next:false};
+  }
+
+  function syncPopup(){
+    if(!popup || popup.closed) return;
+    try{
+      const doc = popup.document;
+      const elTime = doc.getElementById('timeText');
+      const elStatus = doc.getElementById('status');
+      const elEnd = doc.getElementById('endTime');
+      if(elTime) elTime.textContent = timeText.textContent;
+      if(elTime) elTime.className = timeText.className;
+      if(elStatus) elStatus.textContent = status.textContent;
+      if(elEnd) elEnd.textContent = formatTarget(target, isNextDay);
+    }catch(e){}
+  }
+
+  function update(){
+    if(!target) return;
+    const now = new Date();
+    const diff = target - now;
+    if(diff >= 0){
+      timeText.textContent = formatSpan(diff);
+      timeText.classList.remove('elapsed');
+      status.textContent = '残り時間';
+    } else {
+      timeText.textContent = formatSpan(diff);
+      timeText.classList.add('elapsed');
+      status.textContent = '経過時間';
+    }
+    syncPopup();
+  }
+
+  function start(){
+    const val = timeInput.value;
+    if(!val){ alert('終了時刻を選択してください'); return; }
+    const parsed = parseToTarget(val);
+    if(!parsed){ alert('有効な時刻を選んでください'); return; }
+    target = parsed.d; isNextDay = parsed.next;
+    if(timer) clearInterval(timer);
+    update();
+    timer = setInterval(update, 500);
+    startBtn.disabled = true;
+    syncPopup();
+  }
+
+  function reset(){
+    if(timer) clearInterval(timer);
+    timer = null; target = null; isNextDay = false;
+    timeText.textContent = '--:--:--'; timeText.classList.remove('elapsed');
+    status.textContent = '終了時刻を指定して「開始」を押してください';
+    startBtn.disabled = false;
+    if(popup && !popup.closed) { popup.close(); popup = null; }
+  }
+
+  function openPopup(){
+    const w = 360, h = 180;
+    popup = window.open('', 'cd_popup', `toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=${w},height=${h}`);
+    if(!popup){ alert('ポップアップがブロックされました。許可してください。'); return; }
+    popup.document.write(`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>カウントダウン</title><style>
+      html,body{margin:0;padding:6px;background:#071029;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN",sans-serif;overflow:hidden}
+      .wrap{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;white-space:nowrap}
+      .time{font-size:48px;font-weight:700;line-height:1;margin:0}
+      .elapsed{color:#ff6b6b}
+      .label{font-size:13px;color:#9aa4b2;margin-top:6px;text-align:center}
+      .end{font-size:11px;color:#9aa4b2;margin-top:6px}
+      </style></head><body><div class="wrap"><div class="time" id="timeText">--:--:--</div><div class="label" id="status">待機中</div><div class="end">終了時刻: <span id="endTime">--</span></div></div></body></html>`);
+    popup.document.close();
+    try{ popup.resizeTo(w,h); }catch(e){}
+    try{ popup.moveTo(Math.max(0,Math.floor((screen.availWidth-w)/2)), Math.max(0,Math.floor((screen.availHeight-h)/3))); }catch(e){}
+    syncPopup();
+  }
+
+  startBtn.addEventListener('click', start);
+  resetBtn.addEventListener('click', reset);
+  popupBtn.addEventListener('click', openPopup);
+  timeInput.addEventListener('keydown', e => { if(e.key === 'Enter') start(); });
+
+  (function initDefault(){
+    const d = new Date(Date.now() + 60*1000);
+    timeInput.value = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  })();
+})();
+</script>
+</body>
+</html>
