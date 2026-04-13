@@ -182,37 +182,86 @@ button.ghost{
   }
 
   function openPopup(){
-    const isTouch='ontouchstart' in window||navigator.maxTouchPoints>0;
-    if(isTouch&&window.innerWidth<=520) return;
+  const w=360, h=180;
+  popup = window.open('', 'cd_popup',
+    `toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=${w},height=${h}`);
 
-    const w=360,h=180;
-    popup=window.open('', 'cd_popup2',
-      `toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=${w},height=${h}`);
+  const targetTime = target.getTime(); // ← これを渡す
 
-    popup.document.write(`
-      <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  popup.document.write(`
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
       <style>
-      html,body{margin:0;padding:6px;background:#071029;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;overflow:hidden}
-      .wrap{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
-      .time{
-        font-size:48px;font-weight:700;
-        font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-        font-variant-numeric:tabular-nums;
-      }
-      .elapsed{color:#ff6b6b}
-      .label{font-size:13px;color:#9aa4b2;margin-top:6px}
-      .end{font-size:11px;color:#9aa4b2;margin-top:6px}
-      </style></head>
-      <body><div class="wrap">
+        html,body{
+          margin:0;padding:6px;background:#071029;color:#fff;
+          font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+          overflow:hidden;
+        }
+        .wrap{
+          width:100%;height:100%;
+          display:flex;flex-direction:column;
+          align-items:center;justify-content:center;
+        }
+        .time{
+          font-size:48px;font-weight:700;
+          font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+          font-variant-numeric:tabular-nums;
+        }
+        .elapsed{color:#ff6b6b}
+        .label{font-size:13px;color:#9aa4b2;margin-top:6px}
+        .end{font-size:11px;color:#9aa4b2;margin-top:6px}
+      </style>
+    </head>
+    <body>
+      <div class="wrap">
         <div id="timeText" class="time">--:--:--</div>
         <div id="status" class="label">待機中</div>
         <div class="end">終了時刻: <span id="endTime">--</span></div>
-      </div></body></html>
-    `);
-    popup.document.close();
-    try{popup.resizeTo(w,h);}catch(e){}
-    syncPopup();
-  }
+      </div>
+
+      <script>
+        const targetTime = ${targetTime};
+
+        const pad = n => String(n).padStart(2,'0');
+        const formatSpan = ms => {
+          const s = Math.floor(Math.abs(ms)/1000);
+          return \`\${pad(Math.floor(s/3600))}:\${pad(Math.floor((s%3600)/60))}:\${pad(s%60)}\`;
+        };
+
+        function update(){
+          const diff = targetTime - Date.now();
+          const timeEl = document.getElementById('timeText');
+          const statusEl = document.getElementById('status');
+
+          timeEl.textContent = formatSpan(diff);
+
+          if(diff >= 0){
+            timeEl.classList.remove('elapsed');
+            statusEl.textContent = '残り時間';
+          } else {
+            timeEl.classList.add('elapsed');
+            statusEl.textContent = '経過時間';
+          }
+        }
+
+        // 終了時刻の表示
+        const end = new Date(targetTime);
+        document.getElementById('endTime').textContent =
+          \`\${pad(end.getHours())}:\${pad(end.getMinutes())}:\${pad(end.getSeconds())}\`;
+
+        update();
+        setInterval(update, 500);
+      <\/script>
+    </body>
+    </html>
+  `);
+
+  popup.document.close();
+}
+
 
   startBtn.addEventListener('click',start);
   resetBtn.addEventListener('click',reset);
