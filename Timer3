@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NowTime + Timer2</title>
+<style>
+:root{
+  --bg:#0f1724;
+  --card:#0b1220;
+  --accent:#7c5cff;
+  --muted:#9aa4b2;
+  --now-blue:#8fbaff; /* NowTime の薄いブルー */
+}
+
+html,body{
+  height:100%;margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:linear-gradient(180deg,#071029,#0f1724);
+  color:#e6eef8;
+}
+
+.container{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:20px;
+  gap:24px;
+}
+
+/* --- NowTime --- */
+.now-card{
+  width:100%;
+  max-width:720px;
+  background:rgba(255,255,255,0.02);
+  border-radius:12px;
+  padding:20px;
+  text-align:center;
+  box-shadow:0 6px 24px rgba(2,6,23,0.6);
+}
+
+.now-date{
+  font-size:20px;
+  color:var(--now-blue);
+  margin-bottom:6px;
+  font-variant-numeric:tabular-nums;
+}
+
+.now-time{
+  font-size:48px;
+  font-weight:700;
+  color:var(--now-blue);
+  font-variant-numeric:tabular-nums;
+}
+
+/* --- Timer2 --- */
+.timer-card{
+  width:100%;
+  max-width:720px;
+  background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
+  border-radius:12px;
+  padding:18px;
+  box-shadow:0 6px 24px rgba(2,6,23,0.6);
+}
+
+.title{
+  font-size:18px;
+  margin:0 0 12px 0;
+}
+
+.presets{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:12px;
+}
+
+input[type="time"]{
+  padding:10px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.06);
+  background:rgba(255,255,255,0.03);
+  color:var(--accent);
+  min-width:150px;
+}
+
+button{
+  padding:10px 14px;
+  border-radius:10px;
+  border:0;
+  background:linear-gradient(90deg,var(--accent),#5ad0ff);
+  color:#041025;
+  font-weight:600;
+  cursor:pointer;
+}
+
+button.ghost{
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.06);
+  color:var(--muted);
+}
+
+.display{
+  margin-top:18px;
+  text-align:center;
+  padding:14px;
+  border-radius:10px;
+  background:rgba(255,255,255,0.02);
+}
+
+.time{
+  font-size:48px;
+  font-weight:700;
+  letter-spacing:0.02em;
+  font-variant-numeric:tabular-nums;
+}
+
+.label{
+  color:var(--muted);
+  margin-top:6px;
+  font-size:13px;
+}
+
+.elapsed{
+  color:#ff6b6b;
+}
+
+@media(max-width:520px){
+  .now-time{font-size:36px}
+  .time{font-size:36px}
+  input[type="time"]{min-width:120px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- NowTime -->
+  <div class="now-card">
+    <div id="nowDate" class="now-date">----/--/-- ---</div>
+    <div id="nowTime" class="now-time">--:--:--</div>
+  </div>
+
+  <!-- Timer2 -->
+  <div class="timer-card">
+    <h1 class="title">Timer2</h1>
+
+    <div class="presets">
+      <button class="presetBtn" data-time="15:59">15:59</button>
+      <button class="presetBtn" data-time="17:40">17:40</button>
+      <button class="presetBtn" data-time="18:59">18:59</button>
+      <button class="presetBtn" data-time="19:47">19:47</button>
+      <button class="presetBtn" data-time="20:37">20:37</button>
+    </div>
+
+    <div class="display">
+      <div id="timeText" class="time">--:--:--</div>
+      <div id="status" class="label">終了時刻を指定してください</div>
+    </div>
+
+    <div class="controls">
+      <input id="timeInput" type="time" step="1">
+      <button id="startBtn">開始</button>
+      <button id="resetBtn" class="ghost">リセット</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(() => {
+  /* --- NowTime --- */
+  const nowDate = document.getElementById('nowDate');
+  const nowTime = document.getElementById('nowTime');
+  const week = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const pad = n => String(n).padStart(2,'0');
+
+  function updateNow(){
+    const d = new Date();
+    nowTime.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    nowDate.textContent = `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${week[d.getDay()]}`;
+  }
+
+  setInterval(updateNow, 500);
+  updateNow();
+
+  /* --- Timer2 --- */
+  const timeInput = document.getElementById('timeInput');
+  const startBtn  = document.getElementById('startBtn');
+  const resetBtn  = document.getElementById('resetBtn');
+  const timeText  = document.getElementById('timeText');
+  const status    = document.getElementById('status');
+  const presetBtns = document.querySelectorAll('.presetBtn');
+
+  let timer = null;
+  let target = null;
+
+  const formatSpan = ms => {
+    const s = Math.floor(Math.abs(ms)/1000);
+    return `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`;
+  };
+
+  function parseToTarget(val){
+    const [h,m,s] = val.split(':').map(v => parseInt(v,10));
+    if(isNaN(h)||isNaN(m)) return null;
+
+    const now = new Date();
+    const t = new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,s||0);
+
+    if(t <= now){
+      t.setDate(t.getDate()+1);
+    }
+    return t;
+  }
+
+  function updateTimer(){
+    if(!target) return;
+
+    const diff = target - new Date();
+    timeText.textContent = formatSpan(diff);
+
+    if(diff >= 0){
+      timeText.classList.remove('elapsed');
+      status.textContent = '残り時間';
+    } else {
+      timeText.classList.add('elapsed');
+      status.textContent = '経過時間';
+    }
+  }
+
+  function start(){
+    const t = parseToTarget(timeInput.value);
+    if(!t){
+      alert('有効な時刻を選んでください');
+      return;
+    }
+
+    target = t;
+    if(timer) clearInterval(timer);
+    updateTimer();
+    timer = setInterval(updateTimer, 500);
+
+    startBtn.disabled = true;
+  }
+
+  function reset(){
+    if(timer) clearInterval(timer);
+
+    timer = null;
+    target = null;
+
+    timeText.textContent = '--:--:--';
+    timeText.classList.remove('elapsed');
+    status.textContent = '終了時刻を指定してください';
+
+    startBtn.disabled = false;
+  }
+
+  presetBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      timeInput.value = btn.dataset.time + ':00';
+    });
+  });
+
+  // 初期値：1分後
+  (() => {
+    const d = new Date(Date.now()+60000);
+    timeInput.value = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  })();
+
+  startBtn.addEventListener('click', start);
+  resetBtn.addEventListener('click', reset);
+  timeInput.addEventListener('keydown', e => { if(e.key==='Enter') start(); });
+
+})();
+</script>
+</body>
+</html>
