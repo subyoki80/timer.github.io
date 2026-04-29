@@ -10,7 +10,7 @@
   --card:#0b1220;
   --accent:#7c5cff;
   --muted:#9aa4b2;
-  --now-blue:#8fbaff; /* NowTime の薄いブルー */
+  --now-blue:#8fbaff;
 }
 
 html,body{
@@ -65,16 +65,28 @@ html,body{
   box-shadow:0 6px 24px rgba(2,6,23,0.6);
 }
 
-.title{
-  font-size:18px;
-  margin:0 0 12px 0;
+.display{
+  text-align:center;
+  padding:14px;
+  border-radius:10px;
+  background:rgba(255,255,255,0.02);
 }
 
-.presets{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin-bottom:12px;
+.time{
+  font-size:48px;
+  font-weight:700;
+  letter-spacing:0.02em;
+  font-variant-numeric:tabular-nums;
+}
+
+.label{
+  color:var(--muted);
+  margin-top:6px;
+  font-size:13px;
+}
+
+.elapsed{
+  color:#ff6b6b;
 }
 
 .controls{
@@ -109,29 +121,12 @@ button.ghost{
   color:var(--muted);
 }
 
-.display{
+/* プリセットは最下部 */
+.presets{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
   margin-top:18px;
-  text-align:center;
-  padding:14px;
-  border-radius:10px;
-  background:rgba(255,255,255,0.02);
-}
-
-.time{
-  font-size:48px;
-  font-weight:700;
-  letter-spacing:0.02em;
-  font-variant-numeric:tabular-nums;
-}
-
-.label{
-  color:var(--muted);
-  margin-top:6px;
-  font-size:13px;
-}
-
-.elapsed{
-  color:#ff6b6b;
 }
 
 @media(max-width:520px){
@@ -152,15 +147,6 @@ button.ghost{
 
   <!-- Timer2 -->
   <div class="timer-card">
-    <h1 class="title">Timer2</h1>
-
-    <div class="presets">
-      <button class="presetBtn" data-time="15:59">15:59</button>
-      <button class="presetBtn" data-time="17:40">17:40</button>
-      <button class="presetBtn" data-time="18:59">18:59</button>
-      <button class="presetBtn" data-time="19:47">19:47</button>
-      <button class="presetBtn" data-time="20:37">20:37</button>
-    </div>
 
     <div class="display">
       <div id="timeText" class="time">--:--:--</div>
@@ -172,6 +158,16 @@ button.ghost{
       <button id="startBtn">開始</button>
       <button id="resetBtn" class="ghost">リセット</button>
     </div>
+
+    <!-- プリセットは最下部 -->
+    <div class="presets">
+      <button class="presetBtn" data-time="15:59">15:59</button>
+      <button class="presetBtn" data-time="17:40">17:40</button>
+      <button class="presetBtn" data-time="18:59">18:59</button>
+      <button class="presetBtn" data-time="19:47">19:47</button>
+      <button class="presetBtn" data-time="20:37">20:37</button>
+    </div>
+
   </div>
 
 </div>
@@ -210,11 +206,11 @@ button.ghost{
   };
 
   function parseToTarget(val){
-    const [h,m,s] = val.split(':').map(v => parseInt(v,10));
+    const [h,m] = val.split(':').map(v => parseInt(v,10));
     if(isNaN(h)||isNaN(m)) return null;
 
     const now = new Date();
-    const t = new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,s||0);
+    const t = new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,0);
 
     if(t <= now){
       t.setDate(t.getDate()+1);
@@ -267,14 +263,14 @@ button.ghost{
 
   presetBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      timeInput.value = btn.dataset.time + ':00';
+      timeInput.value = btn.dataset.time;
     });
   });
 
-  // 初期値：1分後
+  // 初期値：1分後（iPhone でも秒は内部的に扱える）
   (() => {
     const d = new Date(Date.now()+60000);
-    timeInput.value = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    timeInput.value = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   })();
 
   startBtn.addEventListener('click', start);
