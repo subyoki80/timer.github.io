@@ -11,6 +11,8 @@
   --accent:#7c5cff;
   --muted:#9aa4b2;
   --now-blue:#8fbaff;
+  --preset-bg:rgba(255,255,255,0.08); /* プリセットの薄い色 */
+  --preset-border:rgba(255,255,255,0.15);
 }
 
 html,body{
@@ -25,16 +27,9 @@ html,body{
   display:flex;
   flex-direction:column;
   align-items:center;
-  justify-content:center; /* ← 上下中央寄せ */
+  justify-content:center; /* 上下中央寄せ */
   padding:20px;
   gap:24px;
-}
-
-/* アプリ名 */
-.app-title{
-  font-size:18px;
-  color:#9aa4b2;
-  margin-bottom:4px;
 }
 
 /* --- NowTime --- */
@@ -112,6 +107,7 @@ input[type="time"]{
   min-width:150px;
 }
 
+/* 開始ボタン（従来の強調色） */
 button{
   padding:10px 14px;
   border-radius:10px;
@@ -122,10 +118,18 @@ button{
   cursor:pointer;
 }
 
+/* リセット */
 button.ghost{
   background:transparent;
   border:1px solid rgba(255,255,255,0.06);
   color:var(--muted);
+}
+
+/* プリセット（薄い色） */
+button.presetBtn{
+  background:var(--preset-bg);
+  border:1px solid var(--preset-border);
+  color:#d0d7e2;
 }
 
 /* プリセットは最下部 */
@@ -146,15 +150,13 @@ button.ghost{
 <body>
 <div class="container">
 
-  <div class="app-title">TimerLimit</div>
-
   <!-- NowTime -->
   <div class="now-card">
     <div id="nowDate" class="now-date">----/--/-- ---</div>
     <div id="nowTime" class="now-time">--:--:--</div>
   </div>
 
-  <!-- Timer2 -->
+  <!-- Timer -->
   <div class="timer-card">
 
     <div class="display">
@@ -174,6 +176,7 @@ button.ghost{
       <button class="presetBtn" data-time="18:59:00">18:59</button>
       <button class="presetBtn" data-time="19:47:00">19:47</button>
       <button class="presetBtn" data-time="20:37:00">20:37</button>
+      <button class="presetBtn" data-time="20:40:00">20:40</button> <!-- 追加 -->
     </div>
 
   </div>
@@ -197,7 +200,7 @@ button.ghost{
   setInterval(updateNow, 500);
   updateNow();
 
-  /* --- Timer2 --- */
+  /* --- Timer --- */
   const timeInput = document.getElementById('timeInput');
   const startBtn  = document.getElementById('startBtn');
   const resetBtn  = document.getElementById('resetBtn');
@@ -275,7 +278,7 @@ button.ghost{
     });
   });
 
-  // 初期値：1分後（秒も含める）
+  // 初期値：1分後
   (() => {
     const d = new Date(Date.now()+60000);
     timeInput.value = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
